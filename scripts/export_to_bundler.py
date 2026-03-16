@@ -7,15 +7,22 @@ from pathlib import Path
 
 def build_tracks(
     colmap_database_path: Path,
+    pycolmap_version: str,
     ):
     
-    database = pycolmap.Database(str(colmap_database_path))
+    if pycolmap_version == "3.13.0":
+        database = pycolmap.Database.open(str(colmap_database_path))
+    else:
+        database = pycolmap.Database(str(colmap_database_path))
     all_pairs, all_matches = database.read_all_matches()
 
 
     G = nx.Graph()
     for pairs, matches in zip(all_pairs, all_matches):
-        image_id1, image_id2 = database.pair_id_to_image_pair(pairs)
+        if pycolmap_version == "3.13.0":
+            image_id1, image_id2 = pycolmap.pair_id_to_image_pair(pairs)
+        else:
+            image_id1, image_id2 = database.pair_id_to_image_pair(pairs)
         #if geom.config != pycolmap.TwoViewGeometryConfig.SUCCESS:
         #    continue
         for (i1, i2) in matches:
@@ -89,7 +96,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Export COLMAP database model to Bundler format")
     parser.add_argument("-d", "--colmap_database_path", type=Path, help="Path to the COLMAP database file", required=True)
     parser.add_argument("-o", "--output_dir", type=Path, help="Path to the output dir", required=True)
-    args = parser.parse_args()  
+    args = parser.parse_args()
 
-    database, tracks = build_tracks(args.colmap_database_path)
+    database, tracks = build_tracks(args.colmap_database_path, pycolmap.__version__)
     export_to_bundler(database, tracks, args.output_dir)
