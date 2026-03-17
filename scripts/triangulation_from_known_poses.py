@@ -1,5 +1,6 @@
 import os
 import pycolmap
+import numpy as np
 from typing import Dict, List, Tuple
 
 
@@ -21,11 +22,13 @@ def main(
     Returns:
         Dictionary containing parsed reconstruction data
     """
-    
+
     if os.path.exists(output_folder):
         import shutil
         shutil.rmtree(output_folder)
     os.makedirs(output_folder, exist_ok=True)
+
+    out_3Dpoints_path = os.path.join(output_folder, "triangulated_points.txt")
     
     # Parse image list
     image_list = parse_image_list(out_list_file)
@@ -38,6 +41,42 @@ def main(
     reconstruction = pycolmap.Reconstruction()
     reconstruction.read(reconstruction_folder)
     print(reconstruction.summary())
+
+    cameras = reconstruction.cameras
+    images = reconstruction.images
+    
+    #print(cameras[1])
+    #print(images[1])
+    #print(images[1].cam_from_world());quit()
+
+    triangulation_options = pycolmap.EstimateTriangulationOptions()
+
+    with open(out_3Dpoints_path, 'w') as out_3Dpoints_file:
+        for point3D in bundler_data["points"]:
+            print(point3D)
+            points_for_triang = np.empty((0, 2))
+            cameras_for_triang = []
+            cams_from_world_for_triang = []
+
+            for view in point3D['views']:
+                image_id = view['camera_idx'] + 1
+                colmap_image = images[image_id]
+                cams_from_world_for_triang.append(colmap_image.cam_from_world())
+                points_for_triang = np.vstack((points_for_triang, np.array([[view['x'], view['y']]])))
+                cameras_for_triang.append(colmap_image.camera)
+
+
+            point3D = pycolmap.estimate_triangulation(
+                points=points_for_triang,
+                cams_from_world=cams_from_world_for_triang,
+                cameras=cameras_for_triang,
+                options=triangulation_options,
+            )
+            print(point3D)
+            if point3D is not None:
+                out_3Dpoints_file.write(f"{point3D['xyz'][0]} {point3D['xyz'][1]} {point3D['xyz'][2]}\n")
+
+            #quit()
     
     return reconstruction
 
