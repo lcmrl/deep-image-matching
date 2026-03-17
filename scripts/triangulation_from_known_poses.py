@@ -1,15 +1,37 @@
 import os
 import pycolmap
+import pyceres
+import pycolmap.cost_functions
+
 import numpy as np
 from typing import Dict, List, Tuple
+from copy import deepcopy
 
 
-def main(
+def run_bundle_adjustment(
+    bundler_data: Dict,
+    reconstruction: pycolmap.Reconstruction,
+    points3D: Dict,
+) -> None:
+    """Run bundle adjustment on the given reconstruction and 3D points."""
+
+    prob = pyceres.Problem()
+    loss = pyceres.TrivialLoss()
+
+    for im in reconstruction.images.values():
+        cam = reconstruction.cameras[im.camera_id]
+        print(im)
+        print(cam)
+        quit()
+
+
+
+def triangulate_from_known_poses(
     reconstruction_folder: str,
     bundler_out_file: str,
     out_list_file: str,
     output_folder: str
-) -> Dict:
+) -> Tuple[pycolmap.Reconstruction, Dict]:
     """
     Parse COLMAP reconstruction folder and related files.
     
@@ -20,7 +42,7 @@ def main(
         output_folder: Output folder for results
     
     Returns:
-        Dictionary containing parsed reconstruction data
+        Tuple containing the parsed reconstruction and 3D points
     """
 
     if os.path.exists(output_folder):
@@ -41,21 +63,57 @@ def main(
     # Parse COLMAP reconstruction (cameras, images, points3D)
     reconstruction = pycolmap.Reconstruction()
     reconstruction.read(reconstruction_folder)
-    print(reconstruction.summary())
+    
+    new_reconstruction = pycolmap.Reconstruction()
 
     cameras = reconstruction.cameras
     images = reconstruction.images
-    
-    #print(cameras[1])
-    #print(images[1])
-    #print(images[1].cam_from_world());quit()
+    points3D = {}
 
     triangulation_options = pycolmap.EstimateTriangulationOptions()
 
+    for camera in cameras.values():
+        new_reconstruction.add_camera(deepcopy(camera))
+
+    colmap_rig = pycolmap.Rig(
+        {
+            "rig_id": 1,
+        }
+    )
+    sensor1 = pycolmap.sensor_t(
+        {
+            "type": pycolmap.SensorType.CAMERA, 
+            "id": 1,  # Use camera_id 1 (first camera)
+         }
+         )
+    colmap_rig.add_ref_sensor(sensor1)
+    new_reconstruction.add_rig(colmap_rig)
+
+    
+
     with open(out_image_pos_path, 'w') as out_image_pos_file:
-        for i in images:
+        for i in range(1,len(images)+1):
+            data_t = pycolmap.data_t({"sensor_id": sensor1, "id": i})
             center = images[i].projection_center()
             out_image_pos_file.write(f"{center[0]} {center[1]} {center[2]}\n")
+
+            # Add frame
+            new_frame = pycolmap.Frame()
+            new_frame.frame_id = i
+            new_frame.rig_id = 1
+            new_frame.add_data_id(data_t)
+            new_reconstruction.add_frame(new_frame)
+            print("frame data id", new_frame.num_data_ids)
+            
+            # Add image
+            new_image = pycolmap.Image({
+                "image_id": images[i].image_id,
+                "camera_id": images[i].camera_id,
+                "frame_id": images[i].frame_id,
+            })
+            print("image data id", new_image.data_id)
+            new_reconstruction.add_image(new_image)
+    
 
     with open(out_3Dpoints_path, 'w') as out_3Dpoints_file:
         for point3D in bundler_data["points"]:
@@ -63,6 +121,7 @@ def main(
             points_for_triang = np.empty((0, 2))
             cameras_for_triang = []
             cams_from_world_for_triang = []
+            #track = pycolmap.Track()
 
             for view in point3D['views']:
                 image_id = view['camera_idx'] + 1
@@ -74,21 +133,24 @@ def main(
                 y = height/2 - view['y']
                 points_for_triang = np.vstack((points_for_triang, np.array([[x, y]])))
                 cameras_for_triang.append(colmap_image.camera)
+                #track.add_element(image_id, view['keypoint_idx'])
 
 
-            point3D = pycolmap.estimate_triangulation(
+            point3Dxyz = pycolmap.estimate_triangulation(
                 points=points_for_triang,
                 cams_from_world=cams_from_world_for_triang,
                 cameras=cameras_for_triang,
                 options=triangulation_options,
             )
-            print(point3D)
-            if point3D is not None:
-                out_3Dpoints_file.write(f"{point3D['xyz'][0]} {point3D['xyz'][1]} {point3D['xyz'][2]}\n")
-
-            #quit()
+            #print(point3Dxyz)
+            if point3Dxyz is not None:
+                out_3Dpoints_file.write(f"{point3Dxyz['xyz'][0]} {point3Dxyz['xyz'][1]} {point3Dxyz['xyz'][2]}\n")
+                points3D[point3D['id']] = point3Dxyz
+                #reconstruction.add_point3D(
+                #    point3Dxyz['xyz'].reshape(3,1),
+                #)
     
-    return reconstruction
+    return bundler_data, reconstruction, points3D
 
 
 def parse_image_list(filepath: str) -> List[str]:
@@ -228,9 +290,11 @@ def parse_bundler_out(filepath: str) -> Dict:
 
 
 if __name__ == "__main__":
-    reconstruction = main(
+    bundler_data, reconstruction, points3D = triangulate_from_known_poses(
         reconstruction_folder=r"C:\Users\threedom\Desktop\lcmrl-github\deep-image-matching\assets\pytest\results_superpoint+lightglue_bruteforce_quality_high\reconstruction",
         bundler_out_file=r"C:\Users\threedom\Desktop\lcmrl-github\deep-image-matching\assets\pytest\results_superpoint+lightglue_bruteforce_quality_high\bundler.out",
         out_list_file=r"C:\Users\threedom\Desktop\lcmrl-github\deep-image-matching\assets\pytest\results_superpoint+lightglue_bruteforce_quality_high\bundler.out.list.txt",
         output_folder=r"C:\Users\threedom\Desktop\lcmrl-github\deep-image-matching\assets\pytest\results_superpoint+lightglue_bruteforce_quality_high\out"
     )
+
+    run_bundle_adjustment(bundler_data, reconstruction, points3D)
