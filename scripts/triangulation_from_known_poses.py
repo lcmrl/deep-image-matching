@@ -29,6 +29,7 @@ def main(
     os.makedirs(output_folder, exist_ok=True)
 
     out_3Dpoints_path = os.path.join(output_folder, "triangulated_points.txt")
+    out_image_pos_path = os.path.join(output_folder, "image_poses.txt")
     
     # Parse image list
     image_list = parse_image_list(out_list_file)
@@ -51,6 +52,11 @@ def main(
 
     triangulation_options = pycolmap.EstimateTriangulationOptions()
 
+    with open(out_image_pos_path, 'w') as out_image_pos_file:
+        for i in images:
+            center = images[i].projection_center()
+            out_image_pos_file.write(f"{center[0]} {center[1]} {center[2]}\n")
+
     with open(out_3Dpoints_path, 'w') as out_3Dpoints_file:
         for point3D in bundler_data["points"]:
             print(point3D)
@@ -62,7 +68,11 @@ def main(
                 image_id = view['camera_idx'] + 1
                 colmap_image = images[image_id]
                 cams_from_world_for_triang.append(colmap_image.cam_from_world())
-                points_for_triang = np.vstack((points_for_triang, np.array([[view['x'], view['y']]])))
+                width = colmap_image.camera.width
+                height = colmap_image.camera.height
+                x = view['x'] + width/2
+                y = height/2 - view['y']
+                points_for_triang = np.vstack((points_for_triang, np.array([[x, y]])))
                 cameras_for_triang.append(colmap_image.camera)
 
 
