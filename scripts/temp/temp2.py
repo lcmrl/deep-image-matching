@@ -63,8 +63,10 @@ def plot_intensity_curve(image_path):
 
 if __name__ == "__main__":
     # Specify the path to your image
-    image_path = (
-        r"C:\Users\threedom\Desktop\Neil\luca_all\images\11-12-22-313-radiometric.jpg"
+    # Replace with your own image path
+    image_path = os.environ.get(
+        "TEST_IMAGE_PATH",
+        "./test_images/sample.jpg"
     )
 
     # Call the function to plot the intensity curve with Gaussian fit and outlier rejection
