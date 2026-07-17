@@ -210,6 +210,16 @@ confs = {
             "filter_threshold": 0.1,  # match threshold
         },
     },
+    "aliked+kornia_matcher": {
+        "extractor": {
+            "name": "aliked",
+            "model_name": "aliked-n16rot",
+            "max_num_keypoints": 4000,
+            "detection_threshold": 0.2,
+            "nms_radius": 3,
+        },
+        "matcher": {"name": "kornia_matcher", "match_mode": "smnn", "th": 0.95},
+    },
     "rdd_sparse+lightglue": {
         "extractor": {
             "name": "rdd_sparse",

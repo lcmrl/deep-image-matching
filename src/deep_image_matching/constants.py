@@ -33,6 +33,7 @@ class Pipeline(Enum):
     ROMA = 8
     KEYNETAFFNETHARDNET_KORNIA_MATCHER = 9
     DEDODE_KORNIA_MATCHER = 10
+    ALIKED_KORNIA_MATCHER = 11
 
 
 class TileSelection(Enum):

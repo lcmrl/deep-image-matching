@@ -92,6 +92,7 @@ Possible configurations are:
 - superpoint+superglue
 - disk+lightglue
 - aliked+lightglue
+- aliked+kornia_matcher (i.e., ALIKED + Nearest Neighbor matcher)
 - orb+kornia_matcher (i.e., ORB (OpenCV) + Nearest Neighbor matcher)
 - sift+kornia_matcher (i.e., sift (OpenCV) + Nearest Neighbor matcher)
 - keynetaffnethardnet+kornia_matcher (i.e., keynetaffnethardnet (Kornia) + Nearest Neighbor matcher)
