@@ -152,11 +152,16 @@ class ExtractorBase(metaclass=ABCMeta):
         logger.debug(f"Saving directory: {self.config['general']['output_dir']}")
 
         # Get device
-        self._device = (
-            "cuda"
-            if torch.cuda.is_available() and not self.config["general"]["force_cpu"]
-            else "cpu"
-        )
+        if self.config["general"]["force_cpu"]:
+            self._device = torch.device("cpu")
+        elif torch.cuda.is_available():
+            gpu_index = self.config["general"].get("gpu", None)
+            if gpu_index is not None:
+                self._device = torch.device(f"cuda:{gpu_index}")
+            else:
+                self._device = torch.device("cuda:0")
+        else:
+            self._device = torch.device("cpu")
         logger.debug(f"Running inference on device {self._device}")
 
     def extract(self, img: Union[Image, Path, str]) -> np.ndarray:

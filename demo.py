@@ -133,6 +133,7 @@ if __name__ == "__main__":
             "skip_reconstruction": False,
             "graph": True,
             "verbose": True,
+            "gpu": None,
         }
 
     run_matching(args)

@@ -39,6 +39,7 @@ cli_options_defaults = {
     "graph": True,
     "openmvg": None,
     "camera_options": None,
+    "gpu": None,
 }
 
 # General configuration for the matching process.
@@ -693,6 +694,7 @@ class Config:
             "skip_reconstruction": args["skip_reconstruction"],
             "openmvg_conf": args["openmvg"],
             "camera_options": args["camera_options"],
+            "gpu": args["gpu"],
         }
 
         return cfg

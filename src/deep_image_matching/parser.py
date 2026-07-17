@@ -142,6 +142,12 @@ def parse_cli() -> dict:
         help="Path to camera options yaml file, e.g. config/cameras.yaml",
         default="./config/cameras.yaml",
     )
+    parser.add_argument(
+        "--gpu",
+        type=int,
+        default=None,
+        help="GPU device index to use for processing (e.g., 0 for GPU 0). If not specified, uses GPU 0 if available, otherwise CPU.",
+    )
     args = parser.parse_args()
 
     if args.gui is True:
