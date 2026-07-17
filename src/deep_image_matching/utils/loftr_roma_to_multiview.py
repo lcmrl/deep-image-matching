@@ -164,12 +164,12 @@ def LoftrRomaToMultiview(
         h5py.File(input_dir / "matches_loftr.h5", mode="w") as h5_out,
     ):
         for img1 in h5_matches.keys():
-            print(img1)
+            #print(img1)
             kpts1 = h5_feats[img1]["keypoints"][...]
             group_match = h5_matches[img1]
             group_out = h5_out.require_group(img1)
             for img2 in group_match.keys():
-                print(f"--- {img2}")
+                #print(f"--- {img2}")
                 kpts2 = h5_feats[img2]["keypoints"][...]
                 matches = group_match[img2][...]
                 h5_out[img1][img2] = np.hstack(
