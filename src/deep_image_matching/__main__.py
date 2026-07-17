@@ -42,7 +42,7 @@ def run_matching(args):
     )
     timer.update("Export to COLMAP")
 
-    if matcher.matching in ["loftr", "se2loftr", "roma", "srif", "superpoint+lightglue_pair"]:
+    if matcher.matching in ["loftr", "se2loftr", "roma", "srif", "superpoint_lightglue_pair"]:
         images = os.listdir(imgs_dir)
         image_format = Path(images[0]).suffix
         LoftrRomaToMultiview(
