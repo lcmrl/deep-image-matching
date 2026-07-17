@@ -271,6 +271,25 @@ confs = {
             "pretrained": "outdoor",
         },  ################################################### togliere outdoor
     },
+    "superpoint+lightglue_pair": {
+        "extractor": {"name": "no_extractor"},
+        "matcher": {
+            "name": "superpoint_lightglue_pair",
+            "sp_cfg": {
+                "nms_radius": 5,
+                "max_keypoints": 4000,
+                "keypoint_threshold": 0.005,
+            },
+            "lg_cfg": {
+                "features": "superpoint",
+                "n_layers": 9,
+                "depth_confidence": 0.9,
+                "width_confidence": 0.95,
+                "filter_threshold": 0.3,
+                "flash": True,
+            },
+        },
+    },
     "keynetaffnethardnet+kornia_matcher": {
         "extractor": {
             "name": "keynetaffnethardnet",
@@ -332,6 +351,7 @@ opt_zoo = {
         "kornia_matcher",
         "roma",
         "lighterglue",
+        "superpoint_lightglue_pair",
     ],
     "retrieval": ["netvlad", "openibl", "cosplace", "dir"],
     "matching_strategy": [

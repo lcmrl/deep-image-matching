@@ -6,3 +6,4 @@ from .matcher_base import DetectorFreeMatcherBase, MatcherBase, matcher_loader
 from .roma import RomaMatcher
 from .se2loftr import SE2LOFTRMatcher
 from .superglue import SuperGlueMatcher
+from .superpoint_lightglue_pair import SuperPointLightGluePairMatcher
