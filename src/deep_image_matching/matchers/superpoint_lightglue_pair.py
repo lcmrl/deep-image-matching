@@ -132,6 +132,22 @@ class SuperPointLightGluePairMatcher(DetectorFreeMatcherBase):
         # Initialize LightGlue matcher
         self.matcher = LightGlue(**lg_cfg).eval().to(self._device)
 
+        # Cache downsampled images so repeated pair matching does not reload from disk
+        self._image_cache = {}
+
+    def _get_cached_resized_image(self, img_path: Path) -> np.ndarray:
+        """
+        Load and downsample an image once, then reuse the cached result for later pairs.
+        """
+        cache_key = str(img_path.resolve())
+        if cache_key in self._image_cache:
+            return self._image_cache[cache_key]
+
+        image = self._load_image_np(img_path)
+        resized = self._resize_image(self._quality, image)
+        self._image_cache[cache_key] = resized
+        return resized
+
     def _extract_features(self, image: np.ndarray) -> dict:
         """
         Extract features from image using SuperPoint.
@@ -244,13 +260,9 @@ class SuperPointLightGluePairMatcher(DetectorFreeMatcherBase):
         img0_name = img0_path.name
         img1_name = img1_path.name
 
-        # Load images
-        image0 = self._load_image_np(img0_path)
-        image1 = self._load_image_np(img1_path)
-
-        # Resize images if needed
-        image0_ = self._resize_image(self._quality, image0)
-        image1_ = self._resize_image(self._quality, image1)
+        # Load and resize images once per unique path, then reuse for later pairs.
+        image0_ = self._get_cached_resized_image(img0_path)
+        image1_ = self._get_cached_resized_image(img1_path)
 
         original_shape_0 = image0_.shape[:2]
         original_shape_1 = image1_.shape[:2]
